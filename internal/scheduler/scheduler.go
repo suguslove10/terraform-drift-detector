@@ -170,7 +170,7 @@ func (sc *Scheduler) runScan(config models.ScheduleConfig) {
 		config.ID, config.StateFile, config.Provider)
 
 	// Fetch state file (supports local files and s3:// URIs)
-	localPath, err := backend.FetchStateFile(context.Background(), config.StateFile)
+	localPath, err := backend.FetchStateFile(context.Background(), config.StateFile, "")
 	if err != nil {
 		log.Printf("[Scheduler] Failed to fetch state file: %v", err)
 		return

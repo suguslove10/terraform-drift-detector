@@ -21,6 +21,7 @@ var (
 	stateFile    string
 	providerName string
 	jsonOutput   bool
+	awsProfile   string
 )
 
 var scanCmd = &cobra.Command{
@@ -30,7 +31,8 @@ var scanCmd = &cobra.Command{
 
 Supports local files and S3 remote state:
   drift scan --state terraform.tfstate --provider aws
-  drift scan --state s3://my-bucket/env/prod/terraform.tfstate --provider aws`,
+  drift scan --state s3://my-bucket/env/prod/terraform.tfstate --provider aws
+  drift scan --state s3://my-bucket/env/prod/terraform.tfstate --provider aws --profile prod`,
 	RunE: runScan,
 }
 
@@ -38,6 +40,7 @@ func init() {
 	scanCmd.Flags().StringVarP(&stateFile, "state", "s", "", "Path to state file or S3 URI (s3://bucket/key)")
 	scanCmd.Flags().StringVarP(&providerName, "provider", "p", "mock", "Cloud provider to use (mock, aws)")
 	scanCmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output report as JSON")
+	scanCmd.Flags().StringVarP(&awsProfile, "profile", "q", "", "AWS credentials profile to use for S3")
 	scanCmd.MarkFlagRequired("state")
 	rootCmd.AddCommand(scanCmd)
 }
@@ -49,10 +52,13 @@ func runScan(cmd *cobra.Command, args []string) error {
 	fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
 	fmt.Printf("  State File : %s\n", stateFile)
 	fmt.Printf("  Provider   : %s\n", providerName)
+	if awsProfile != "" {
+		fmt.Printf("  AWS Profile: %s\n", awsProfile)
+	}
 	fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n")
 
 	// Fetch state file (supports local files and s3:// URIs)
-	localPath, err := backend.FetchStateFile(ctx, stateFile)
+	localPath, err := backend.FetchStateFile(ctx, stateFile, awsProfile)
 	if err != nil {
 		return fmt.Errorf("failed to fetch state file: %w", err)
 	}

@@ -109,7 +109,7 @@ func triggerScan(c *gin.Context) {
 	}
 
 	// Fetch state file (supports local files and s3:// URIs)
-	localPath, err := backend.FetchStateFile(context.Background(), req.StateFile)
+	localPath, err := backend.FetchStateFile(context.Background(), req.StateFile, "")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Failed to fetch state file: %v", err)})
 		return

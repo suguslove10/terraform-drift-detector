@@ -18,9 +18,9 @@ import (
 //   - S3: "s3://bucket-name/path/to/terraform.tfstate"
 //
 // Returns the local file path (downloading to a temp location if remote).
-func FetchStateFile(ctx context.Context, source string) (string, error) {
+func FetchStateFile(ctx context.Context, source string, profile string) (string, error) {
 	if strings.HasPrefix(source, "s3://") {
-		return fetchFromS3(ctx, source)
+		return fetchFromS3(ctx, source, profile)
 	}
 
 	// Local file — verify it exists
@@ -33,7 +33,7 @@ func FetchStateFile(ctx context.Context, source string) (string, error) {
 
 // fetchFromS3 downloads a state file from S3 to a local temp file.
 // Format: s3://bucket-name/path/to/key
-func fetchFromS3(ctx context.Context, s3URI string) (string, error) {
+func fetchFromS3(ctx context.Context, s3URI string, profile string) (string, error) {
 	// Parse s3://bucket/key
 	path := strings.TrimPrefix(s3URI, "s3://")
 	slashIdx := strings.Index(path, "/")
@@ -48,10 +48,15 @@ func fetchFromS3(ctx context.Context, s3URI string) (string, error) {
 		return "", fmt.Errorf("invalid S3 URI %q — bucket and key must not be empty", s3URI)
 	}
 
-	fmt.Printf("☁️  Fetching state from S3: %s/%s\n", bucket, key)
+	fmt.Printf("☁️  Fetching state from S3: %s/%s using profile %q\n", bucket, key, profile)
 
 	// Load AWS config from default credential chain
-	cfg, err := config.LoadDefaultConfig(ctx)
+	var opts []func(*config.LoadOptions) error
+	if profile != "" {
+		opts = append(opts, config.WithSharedConfigProfile(profile))
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx, opts...)
 	if err != nil {
 		return "", fmt.Errorf("failed to load AWS config: %w\n\nMake sure AWS credentials are configured:\n  - Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY env vars, or\n  - Configure ~/.aws/credentials, or\n  - Use IAM role if running on EC2/ECS", err)
 	}

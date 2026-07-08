@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"terraform-drift-detector/internal/backend"
 	"terraform-drift-detector/internal/comparator"
 	"terraform-drift-detector/internal/models"
 	"terraform-drift-detector/internal/parser"
@@ -107,8 +108,15 @@ func triggerScan(c *gin.Context) {
 		return
 	}
 
+	// Fetch state file (supports local files and s3:// URIs)
+	localPath, err := backend.FetchStateFile(context.Background(), req.StateFile)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Failed to fetch state file: %v", err)})
+		return
+	}
+
 	// Parse state file
-	resources, err := parser.ParseStateFile(req.StateFile)
+	resources, err := parser.ParseStateFile(localPath)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Failed to parse state file: %v", err)})
 		return

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"terraform-drift-detector/internal/backend"
 	"terraform-drift-detector/internal/comparator"
 	"terraform-drift-detector/internal/models"
 	"terraform-drift-detector/internal/parser"
@@ -25,12 +26,16 @@ var (
 var scanCmd = &cobra.Command{
 	Use:   "scan",
 	Short: "Run a drift detection scan against a state file",
-	Long:  "Parses a Terraform state file and compares it against actual cloud infrastructure to detect drift.",
-	RunE:  runScan,
+	Long: `Parses a Terraform state file and compares it against actual cloud infrastructure to detect drift.
+
+Supports local files and S3 remote state:
+  drift scan --state terraform.tfstate --provider aws
+  drift scan --state s3://my-bucket/env/prod/terraform.tfstate --provider aws`,
+	RunE: runScan,
 }
 
 func init() {
-	scanCmd.Flags().StringVarP(&stateFile, "state", "s", "", "Path to Terraform state file (required)")
+	scanCmd.Flags().StringVarP(&stateFile, "state", "s", "", "Path to state file or S3 URI (s3://bucket/key)")
 	scanCmd.Flags().StringVarP(&providerName, "provider", "p", "mock", "Cloud provider to use (mock, aws)")
 	scanCmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output report as JSON")
 	scanCmd.MarkFlagRequired("state")
@@ -38,10 +43,7 @@ func init() {
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
-	// Verify state file exists
-	if _, err := os.Stat(stateFile); os.IsNotExist(err) {
-		return fmt.Errorf("state file not found: %s", stateFile)
-	}
+	ctx := context.Background()
 
 	fmt.Printf("\n⚡ Terraform Drift Detector\n")
 	fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
@@ -49,8 +51,14 @@ func runScan(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  Provider   : %s\n", providerName)
 	fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n")
 
+	// Fetch state file (supports local files and s3:// URIs)
+	localPath, err := backend.FetchStateFile(ctx, stateFile)
+	if err != nil {
+		return fmt.Errorf("failed to fetch state file: %w", err)
+	}
+
 	// Parse state file
-	resources, err := parser.ParseStateFile(stateFile)
+	resources, err := parser.ParseStateFile(localPath)
 	if err != nil {
 		return fmt.Errorf("failed to parse state file: %w", err)
 	}

@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"terraform-drift-detector/internal/backend"
 	"terraform-drift-detector/internal/comparator"
 	"terraform-drift-detector/internal/models"
 	"terraform-drift-detector/internal/parser"
@@ -168,7 +169,14 @@ func (sc *Scheduler) runScan(config models.ScheduleConfig) {
 	log.Printf("[Scheduler] Running scan for schedule %s (state: %s, provider: %s)",
 		config.ID, config.StateFile, config.Provider)
 
-	resources, err := parser.ParseStateFile(config.StateFile)
+	// Fetch state file (supports local files and s3:// URIs)
+	localPath, err := backend.FetchStateFile(context.Background(), config.StateFile)
+	if err != nil {
+		log.Printf("[Scheduler] Failed to fetch state file: %v", err)
+		return
+	}
+
+	resources, err := parser.ParseStateFile(localPath)
 	if err != nil {
 		log.Printf("[Scheduler] Failed to parse state file: %v", err)
 		return

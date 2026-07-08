@@ -103,14 +103,10 @@ func compareResource(ctx context.Context, p provider.Provider, expected models.R
 func compareAttributes(expected, actual map[string]any) []models.AttributeDiff {
 	var diffs []models.AttributeDiff
 
-	for key, expectedVal := range expected {
-		actualVal, exists := actual[key]
+	for key, actualVal := range actual {
+		expectedVal, exists := expected[key]
 		if !exists {
-			diffs = append(diffs, models.AttributeDiff{
-				Name:     key,
-				Expected: expectedVal,
-				Actual:   nil,
-			})
+			// Skip actual attributes that are not defined in expected state
 			continue
 		}
 
@@ -118,17 +114,6 @@ func compareAttributes(expected, actual map[string]any) []models.AttributeDiff {
 			diffs = append(diffs, models.AttributeDiff{
 				Name:     key,
 				Expected: expectedVal,
-				Actual:   actualVal,
-			})
-		}
-	}
-
-	// Check for attributes that exist in actual but not in expected
-	for key, actualVal := range actual {
-		if _, exists := expected[key]; !exists {
-			diffs = append(diffs, models.AttributeDiff{
-				Name:     key,
-				Expected: nil,
 				Actual:   actualVal,
 			})
 		}

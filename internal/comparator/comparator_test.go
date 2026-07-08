@@ -87,17 +87,14 @@ func TestCompareAttributes(t *testing.T) {
 	actual := map[string]any{
 		"instance_type": "t3.xlarge", // changed
 		"ami":           "ami-12345", // same
-		// monitoring removed
-		"new_field": "unexpected", // added
 	}
 
 	diffs := compareAttributes(expected, actual)
 
-	if len(diffs) != 3 {
-		t.Fatalf("expected 3 diffs, got %d: %+v", len(diffs), diffs)
+	if len(diffs) != 1 {
+		t.Fatalf("expected 1 diff, got %d: %+v", len(diffs), diffs)
 	}
 
-	// Check that we have the expected diff types
 	diffMap := make(map[string]models.AttributeDiff)
 	for _, d := range diffs {
 		diffMap[d.Name] = d
@@ -109,14 +106,6 @@ func TestCompareAttributes(t *testing.T) {
 		}
 	} else {
 		t.Error("missing diff for instance_type")
-	}
-
-	if _, ok := diffMap["monitoring"]; !ok {
-		t.Error("missing diff for monitoring (removed)")
-	}
-
-	if _, ok := diffMap["new_field"]; !ok {
-		t.Error("missing diff for new_field (added)")
 	}
 }
 

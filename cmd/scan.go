@@ -47,6 +47,9 @@ func init() {
 
 func runScan(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
+	if awsProfile != "" {
+		ctx = context.WithValue(ctx, "aws_profile", awsProfile)
+	}
 
 	fmt.Printf("\n⚡ Terraform Drift Detector\n")
 	fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
@@ -73,7 +76,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	// Run comparison
 	fmt.Printf("🔍 Scanning for drift...\n\n")
-	report, err := comparator.Compare(context.Background(), resources, providerName, stateFile)
+	report, err := comparator.Compare(ctx, resources, providerName, stateFile)
 	if err != nil {
 		return fmt.Errorf("scan failed: %w", err)
 	}

@@ -124,8 +124,13 @@ func triggerScan(c *gin.Context) {
 		return
 	}
 
+	ctx := context.Background()
+	if req.AWSProfile != "" {
+		ctx = context.WithValue(ctx, "aws_profile", req.AWSProfile)
+	}
+
 	// Fetch state file (supports local files and s3:// URIs)
-	localPath, err := backend.FetchStateFile(context.Background(), req.StateFile, req.AWSProfile)
+	localPath, err := backend.FetchStateFile(ctx, req.StateFile, req.AWSProfile)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Failed to fetch state file: %v", err)})
 		return
@@ -139,7 +144,7 @@ func triggerScan(c *gin.Context) {
 	}
 
 	// Run comparison
-	report, err := comparator.Compare(context.Background(), resources, req.Provider, req.StateFile)
+	report, err := comparator.Compare(ctx, resources, req.Provider, req.StateFile)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Scan failed: %v", err)})
 		return

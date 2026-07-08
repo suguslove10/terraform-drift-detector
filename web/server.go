@@ -114,8 +114,9 @@ func getReport(c *gin.Context) {
 // triggerScan runs a drift scan on demand.
 func triggerScan(c *gin.Context) {
 	var req struct {
-		StateFile string `json:"state_file" binding:"required"`
-		Provider  string `json:"provider" binding:"required"`
+		StateFile  string `json:"state_file" binding:"required"`
+		Provider   string `json:"provider" binding:"required"`
+		AWSProfile string `json:"aws_profile"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -124,7 +125,7 @@ func triggerScan(c *gin.Context) {
 	}
 
 	// Fetch state file (supports local files and s3:// URIs)
-	localPath, err := backend.FetchStateFile(context.Background(), req.StateFile, "")
+	localPath, err := backend.FetchStateFile(context.Background(), req.StateFile, req.AWSProfile)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Failed to fetch state file: %v", err)})
 		return

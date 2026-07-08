@@ -99,18 +99,21 @@
                 </div>
                 <div class="panel-body">
                     <div class="form-row">
-                        <div class="form-group">
+                        <div class="form-group" style="flex: 2;">
                             <label for="stateFileSelect">State File</label>
-                            <select id="stateFileSelect" class="form-select">
-                                <option value="">Loading...</option>
-                            </select>
+                            <input type="text" id="stateFileSelect" class="form-input" placeholder="e.g. s3://bucket/key or local path" list="stateFileList">
+                            <datalist id="stateFileList"></datalist>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" style="flex: 1;">
                             <label for="providerSelect">Provider</label>
                             <select id="providerSelect" class="form-select">
                                 <option value="mock">Mock</option>
                                 <option value="aws">AWS</option>
                             </select>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="profileInput">AWS Profile</label>
+                            <input type="text" id="profileInput" class="form-input" placeholder="Optional (e.g. sb)">
                         </div>
                         <button id="runScanBtn" class="btn btn-primary" onclick="runScan()">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

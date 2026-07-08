@@ -345,7 +345,7 @@ body::before {
     color: var(--text-secondary);
 }
 
-.form-select {
+.form-select, .form-input {
     padding: 0.6rem 1rem;
     background: var(--bg-input);
     border: 1px solid var(--border-medium);
@@ -353,8 +353,12 @@ body::before {
     color: var(--text-primary);
     font-family: var(--font-sans);
     font-size: 0.9rem;
-    cursor: pointer;
     transition: all 0.2s;
+    width: 100%;
+}
+
+.form-select {
+    cursor: pointer;
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
@@ -362,11 +366,15 @@ body::before {
     padding-right: 2.5rem;
 }
 
-.form-select:hover {
+.form-input {
+    cursor: text;
+}
+
+.form-select:hover, .form-input:hover {
     border-color: var(--color-primary);
 }
 
-.form-select:focus {
+.form-select:focus, .form-input:focus {
     outline: none;
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px var(--color-primary-glow);

@@ -35,20 +35,24 @@ async function api(url, options = {}) {
 async function loadStateFiles() {
     try {
         const files = await api('/api/state-files');
-        const select = document.getElementById('stateFileSelect');
-        select.innerHTML = '';
+        const list = document.getElementById('stateFileList');
+        list.innerHTML = '';
         
         if (!files || files.length === 0) {
-            select.innerHTML = '<option value="">No state files found</option>';
             return;
         }
         
         files.forEach(f => {
             const opt = document.createElement('option');
             opt.value = f;
-            opt.textContent = f;
-            select.appendChild(opt);
+            list.appendChild(opt);
         });
+
+        // Autofill input with first option if empty
+        const input = document.getElementById('stateFileSelect');
+        if (input && !input.value && files.length > 0) {
+            input.value = files[0];
+        }
     } catch (err) {
         showToast('Failed to load state files', 'error');
     }
@@ -58,9 +62,10 @@ async function loadStateFiles() {
 async function runScan() {
     const stateFile = document.getElementById('stateFileSelect').value;
     const provider = document.getElementById('providerSelect').value;
+    const awsProfile = document.getElementById('profileInput').value;
     
     if (!stateFile) {
-        showToast('Please select a state file', 'error');
+        showToast('Please specify a state file (local path or s3://...)', 'error');
         return;
     }
     
@@ -71,7 +76,11 @@ async function runScan() {
     try {
         const report = await api('/api/scans', {
             method: 'POST',
-            body: JSON.stringify({ state_file: stateFile, provider }),
+            body: JSON.stringify({ 
+                state_file: stateFile, 
+                provider: provider,
+                aws_profile: awsProfile 
+            }),
         });
         
         currentReport = report;

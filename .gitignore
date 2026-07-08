@@ -1,0 +1,34 @@
+# Binaries
+drift.exe
+drift
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go build cache
+/vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Drift data (runtime generated)
+.drift_data/
+
+# Test output
+*.test
+*.out
+coverage.html
+
+# Environment
+.env
+.env.local

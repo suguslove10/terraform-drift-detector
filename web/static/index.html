@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Terraform Drift Detector — Detect infrastructure configuration drift in real-time">
+    <title>Terraform Drift Detector</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <header class="top-bar">
+        <div class="top-bar-left">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+                <h1>Drift Detector</h1>
+            </div>
+            <span class="badge">Terraform</span>
+        </div>
+        <div class="top-bar-right">
+            <div class="last-scan" id="lastScanTime">
+                <span class="pulse-dot"></span>
+                No scans yet
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Stats Row -->
+        <section class="stats-row" id="statsRow">
+            <div class="stat-card stat-total">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="statTotal">0</span>
+                    <span class="stat-label">Total Resources</span>
+                </div>
+            </div>
+            <div class="stat-card stat-sync">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="statSync">0</span>
+                    <span class="stat-label">In Sync</span>
+                </div>
+            </div>
+            <div class="stat-card stat-drifted">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="statDrifted">0</span>
+                    <span class="stat-label">Drifted</span>
+                </div>
+            </div>
+            <div class="stat-card stat-deleted">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="statDeleted">0</span>
+                    <span class="stat-label">Deleted</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Control Panel -->
+        <section class="control-panel">
+            <div class="panel-card scan-panel">
+                <div class="panel-header">
+                    <h2>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="panel-icon">
+                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        Run Scan
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="stateFileSelect">State File</label>
+                            <select id="stateFileSelect" class="form-select">
+                                <option value="">Loading...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="providerSelect">Provider</label>
+                            <select id="providerSelect" class="form-select">
+                                <option value="mock">Mock</option>
+                                <option value="aws">AWS</option>
+                            </select>
+                        </div>
+                        <button id="runScanBtn" class="btn btn-primary" onclick="runScan()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="5 3 19 12 5 21 5 3"/>
+                            </svg>
+                            Run Scan
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-card schedule-panel">
+                <div class="panel-header">
+                    <h2>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="panel-icon">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        Schedule
+                    </h2>
+                </div>
+                <div class="panel-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="schedInterval">Interval</label>
+                            <select id="schedInterval" class="form-select">
+                                <option value="30s">30 seconds</option>
+                                <option value="1m">1 minute</option>
+                                <option value="5m" selected>5 minutes</option>
+                                <option value="15m">15 minutes</option>
+                                <option value="1h">1 hour</option>
+                            </select>
+                        </div>
+                        <button id="createScheduleBtn" class="btn btn-secondary" onclick="createSchedule()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Create Schedule
+                        </button>
+                    </div>
+                    <div id="activeSchedules" class="schedules-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filter Bar -->
+        <section class="filter-bar">
+            <div class="filter-left">
+                <h2>Drift Results</h2>
+                <div class="filter-chips" id="filterChips">
+                    <button class="chip active" data-filter="all" onclick="setFilter('all')">All</button>
+                    <button class="chip" data-filter="DRIFTED" onclick="setFilter('DRIFTED')">
+                        <span class="chip-dot drifted"></span>Drifted
+                    </button>
+                    <button class="chip" data-filter="DELETED" onclick="setFilter('DELETED')">
+                        <span class="chip-dot deleted"></span>Deleted
+                    </button>
+                    <button class="chip" data-filter="IN_SYNC" onclick="setFilter('IN_SYNC')">
+                        <span class="chip-dot synced"></span>In Sync
+                    </button>
+                </div>
+            </div>
+            <div class="filter-right">
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Search resources..." oninput="filterResources()">
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Table -->
+        <section class="results-section">
+            <div class="results-table-wrapper">
+                <table class="results-table" id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Resource Name</th>
+                            <th>Type</th>
+                            <th>Resource ID</th>
+                            <th>Changes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody">
+                        <tr class="empty-row">
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                                    </svg>
+                                    <p>No scan results yet</p>
+                                    <span>Run a scan to detect drift</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Scan History -->
+        <section class="history-section">
+            <div class="panel-header">
+                <h2>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="panel-icon">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    Scan History
+                </h2>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="empty-state small">
+                    <p>No scan history</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="modalTitle">Resource Details</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/app.js"></script>
+</body>
+</html>

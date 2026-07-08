@@ -56,13 +56,28 @@ func StartServer(addr string, s *store.Store) error {
 		return fmt.Errorf("failed to create static sub-filesystem: %w", err)
 	}
 	r.GET("/", func(c *gin.Context) {
-		c.FileFromFS("index.html", http.FS(staticFS))
+		data, err := fs.ReadFile(staticFS, "index.html")
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Internal Server Error")
+			return
+		}
+		c.Data(http.StatusOK, "text/html; charset=utf-8", data)
 	})
 	r.GET("/styles.css", func(c *gin.Context) {
-		c.FileFromFS("styles.css", http.FS(staticFS))
+		data, err := fs.ReadFile(staticFS, "styles.css")
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Internal Server Error")
+			return
+		}
+		c.Data(http.StatusOK, "text/css; charset=utf-8", data)
 	})
 	r.GET("/app.js", func(c *gin.Context) {
-		c.FileFromFS("app.js", http.FS(staticFS))
+		data, err := fs.ReadFile(staticFS, "app.js")
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Internal Server Error")
+			return
+		}
+		c.Data(http.StatusOK, "application/javascript; charset=utf-8", data)
 	})
 
 	// Start scheduler for any enabled schedules
